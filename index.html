@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        *{
+            font-family: sans-serif;
+        }
+        
+        header{
+            position: fixed;
+            top: 0;
+            width: 100%;
+            color: white;
+            display: block;
+            text-align: center;
+            background-color: blueviolet;
+            margin-bottom: 20px;
+            
+        }
+        main{
+            margin-top: 100px;;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            
+        }
+        #addtask{
+            margin: 15px;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+        }
+        #container{
+            width: 70vw;
+            min-height: 200px;
+            border: 2px solid;
+            border-radius: 20px;
+        }
+        #container>div{
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid;
+            border-radius: 10px;
+            margin: 5px;
+        }
+        div>p{
+            flex-grow: 1;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>to do list</h1>
+    </header>
+    <main>
+        <div id="addtask">
+            <input type="text" id="input" placeholder="Enter the task">
+            <button onclick="addTask()">Add Task</button>
+        </div>
+        <div id="filter">
+            <button  onclick="showAllTask()">All</button>
+            <button  onclick="showCompleteTask()">Completed</button>
+            <button  onclick="showIncompleteTask()">Incompleted</button>
+        </div>
+        <div id="container">
+
+        </div>
+        <button onclick="sortTask()">Sort</button>
+        <div id="counter">
+
+        </div>
+    </main>
+</body>
+</html>
+<script>
+    window.onload = function(){
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        tasks.forEach((task)=> showTask(task.text,task.iscompleted));
+        count();
+    } 
+    function addTask(){
+        let text=document.getElementById('input').value;
+        let iscompleted = false;
+        showTask(text,iscompleted);
+        storeTask(text,iscompleted);
+        document.getElementById('input').value = "";
+        count();
+    }
+    function showTask(text, iscompleted){
+        let container = document.getElementById('container');
+        let div = document.createElement('div');
+        let check = document.createElement('input');
+        check.type = "checkbox";
+        check.id="check";
+        let p = document.createElement('p');
+        p.style.display="inline-block";
+        p.innerText=text;
+        let del = document.createElement('button');
+        del.type ="button";
+        del.innerText="Delete";
+        
+        if(iscompleted){
+            p.style.textDecoration="line-through"; 
+            check.checked=iscompleted;
+        }
+        check.addEventListener('click', function(){
+           if(!check.checked){
+            p.style.textDecoration="none"; 
+           }else{
+            p.style.textDecoration="line-through"; 
+           }
+           iscompleted=!iscompleted;
+           updateTask(text,iscompleted);
+           count();
+        })
+        del.addEventListener('click',function(){
+            div.remove();
+            deleteTask(text);
+            count();
+        })
+        
+        div.append(check,p,del);
+        container.appendChild(div);
+
+    }
+    function storeTask(text,iscompleted){
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        tasks.push({text: text, iscompleted:iscompleted});
+        localStorage.setItem('tasks',JSON.stringify(tasks));
+    }
+    function deleteTask(text){
+        let tasks = JSON.parse(localStorage.getItem('tasks'));
+        tasks=tasks.filter((task)=>task.text!==text);
+        localStorage.setItem('tasks',JSON.stringify(tasks));
+    }
+    function updateTask(text,iscompleted){
+        let tasks = JSON.parse(localStorage.getItem('tasks'));
+        tasks=tasks.map((task)=>{
+            if(task.text==text){
+                return {text,iscompleted};
+            }else{
+                return task;
+            }
+        })
+        localStorage.setItem('tasks',JSON.stringify(tasks));
+    }
+    function count(){
+        let tasks=JSON.parse(localStorage.getItem('tasks'));
+        let all=0;
+        let completed=0;
+        let incomplete=0;
+        tasks.forEach((task)=>{
+            ++all;
+            if(task.iscompleted){
+                ++completed;
+            }else{
+                ++incomplete;
+            }
+        })
+        let div= document.getElementById('counter');
+        div.innerHTML="";
+        let allCount= document.createElement('h4');
+        let compCount= document.createElement('h4');
+        let incomCount = document.createElement('h4');
+        allCount.innerText=`All Tasks:${all}`;
+        compCount.innerText=`Completed: ${completed}`;
+        incomCount.innerText=`Incomplete: ${incomplete}`;
+        div.append(allCount,compCount,incomCount);
+    }
+    function sortTask(){
+        document.getElementById('container').innerHTML="";
+        let tasks= JSON.parse(localStorage.getItem('tasks'))||[];
+        tasks.sort((a,b)=>a.text.localeCompare(b.text));
+        localStorage.setItem('tasks',JSON.stringify(tasks));
+        tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        tasks.forEach((task)=> showTask(task.text,task.iscompleted));
+        count();
+    }
+    function showAllTask(){
+        document.getElementById('container').innerHTML="";
+        let tasks= JSON.parse(localStorage.getItem('tasks'))||[];
+        tasks.forEach((task)=> showTask(task.text,task.iscompleted));
+        
+    }
+    function showCompleteTask(){
+        document.getElementById('container').innerHTML="";
+        let tasks= JSON.parse(localStorage.getItem('tasks'))||[];
+        tasks.forEach((task)=> {
+            if(task.iscompleted){
+                showTask(task.text,task.iscompleted)
+            }
+            });
+    }
+    function showIncompleteTask(){
+        document.getElementById('container').innerHTML="";
+        let tasks= JSON.parse(localStorage.getItem('tasks'))||[];
+        tasks.forEach((task)=> {
+            if(!task.iscompleted){
+                showTask(task.text,task.iscompleted)
+            }
+            });
+    }
+</script>
